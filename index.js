@@ -22,7 +22,13 @@ const arrayTweets = []
 app.post('/sign-up', (req, res) => {
   const user = req.body
   arrayUsers.push(user);
-  console.log(arrayUsers)
+  res.send('OK');
+})
+
+app.post('/tweets', (req, res) => {
+  const tweet = req.body
+  arrayTweets.push(tweet)
+  console.log(arrayTweets)
   res.send('OK');
 })
 
