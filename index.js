@@ -16,12 +16,8 @@ app.use(express.json())
 }
 */
 
-function userIsInList (user, list) {
-  for (let u of list){
-    if(u.username === user){
-      return true
-    }
-  }
+function filterUserTweets(tweet, user) {
+  if(tweet.username === user) return true;
   return false;
 }
 
@@ -30,19 +26,25 @@ const arrayTweets = []
 
 app.post('/sign-up', (req, res) => {
   const user = req.body
+
+  if(!user.username || !user.avatar){
+    return res.status(400).send(`Todos os campos são obrigatórios!`)
+  }
+
   arrayUsers.push(user);
   console.log(user)
-  res.send('OK');
+  res.status(201).send({message: 'OK'});
 })
 
 app.post('/tweets', (req, res) => {
   const tweet = req.body
-  if(userIsInList(tweet.username, arrayUsers)){
-    arrayTweets.push(tweet)
-    res.send('OK');
-  }else{
-    res.sendStatus(401);
+
+  if(!tweet.username || !tweet.tweet){
+    return res.status(400).send(`Todos os campos são obrigatórios!`)
   }
+
+  arrayTweets.push(tweet)
+  res.status(201).send({message: 'OK'});
 })
 
 app.get('/tweets', (req, res) => {
@@ -65,6 +67,22 @@ app.get('/tweets', (req, res) => {
   console.log(arrayTweets);
 
   res.send(newTweetsList)
+})
+
+app.get('/tweets/:username', (req, res) => {
+  const { username } = req.params;
+  const tweetsFiltrados = arrayTweets.filter((tweet) => {
+    return (
+      filterUserTweets(tweet, username)
+    )
+  })
+  const returnTweetsList = tweetsFiltrados.map((tweet) => {
+    const user = arrayUsers.find(u => {
+      return u.username === username
+    })
+    return {...tweet, avatar:user.avatar}
+  })
+  res.send(returnTweetsList);
 })
 
 app.listen(5000, () => console.log('Listen on port 5000...'))
