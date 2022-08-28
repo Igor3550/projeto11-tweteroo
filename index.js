@@ -21,6 +21,29 @@ function filterUserTweets(tweet, user) {
   return false;
 }
 
+function breakTweetsArray (array){
+  let qntPages = Math.ceil(array.length/10);
+  let pageList = []
+  
+  for(let j=1; j<=qntPages; j++){
+
+    let page = []
+    
+    for (let i=((j-1)*10)+1; i<=j*10; i++){
+      if(array[array.length-i]){
+        page.push(array[array.length-i])
+      }
+
+      if(i===array.length) break
+    }
+
+    pageList.push(page)
+
+  }
+
+  return pageList;
+}
+
 const arrayUsers = []
 const arrayTweets = []
 
@@ -32,41 +55,49 @@ app.post('/sign-up', (req, res) => {
   }
 
   arrayUsers.push(user);
-  console.log(user)
   res.status(201).send({message: 'OK'});
 })
 
 app.post('/tweets', (req, res) => {
-  const tweet = req.body
+  const { tweet } = req.body
+  const { user } = req.headers
 
-  if(!tweet.username || !tweet.tweet){
+  if(!tweet || !user){
     return res.status(400).send(`Todos os campos são obrigatórios!`)
   }
 
-  arrayTweets.push(tweet)
-  res.status(201).send({message: 'OK'});
+  arrayTweets.push({username: user, tweet: tweet})
+  res.status(201).send({username: user, tweet: tweet});
 })
 
 app.get('/tweets', (req, res) => {
+
+  const { page } = req.query;
+  let index = 0;
+
+  if(page) {
+    if(page >= 1){
+      index = page-1;
+    }else{
+      return res.status(400).send(`Informe uma página válida!`);
+    }
+  }
   
   let tweetsList = []
-  if(arrayTweets.length <= 10){
-    tweetsList = arrayTweets
-  }else{
-    tweetsList = arrayTweets.slice(arrayTweets.length-10);
-  }
+  
+  tweetsList = breakTweetsArray(arrayTweets);
 
-  const newTweetsList = tweetsList.map((tweet) => {
-    let avatar = ''
-    arrayUsers.forEach(user => {
-      if(user.username === tweet.username) avatar = user.avatar
+  if(tweetsList[index] && index < tweetsList.length){
+    const newTweetsList = tweetsList[index].map((tweet) => {
+      let avatar = ''
+      arrayUsers.forEach(user => {
+        if(user.username === tweet.username) avatar = user.avatar
+      })
+      return {...tweet, avatar: avatar}
     })
-    return {...tweet, avatar: avatar}
-  })
-  console.log(tweetsList);
-  console.log(arrayTweets);
-
-  res.send(newTweetsList)
+    return res.send(newTweetsList)
+  }
+  res.send([])
 })
 
 app.get('/tweets/:username', (req, res) => {
