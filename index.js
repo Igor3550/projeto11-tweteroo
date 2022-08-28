@@ -81,6 +81,8 @@ app.get('/tweets', (req, res) => {
     }else{
       return res.status(400).send(`Informe uma página válida!`);
     }
+  }else{
+    return res.status(400).send(`Informe uma página válida!`);
   }
   
   let tweetsList = []
